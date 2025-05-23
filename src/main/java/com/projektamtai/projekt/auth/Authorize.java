@@ -17,7 +17,7 @@ public class Authorize {
 
     public boolean isAuthorized(String token, Long requiredPrivileges) {
         try {
-            token = token.substring(7);
+            token = token.substring(7); // Remove "Bearer " from the token
             Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 
             Claims claims = Jwts.parser()

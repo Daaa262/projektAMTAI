@@ -1,6 +1,6 @@
 package com.projektamtai.projekt.models;
 
-public class LoginRequest {
+public class LoginRequestModel {
     private String username;
     private String password;
 

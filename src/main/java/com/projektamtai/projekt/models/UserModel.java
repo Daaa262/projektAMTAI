@@ -6,18 +6,13 @@ import jakarta.persistence.*;
 @Table(name = "users")
 public class UserModel {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "Username", nullable = false)
     private String username;
+    @Column(name = "Password", nullable = false)
     private String password;
+    @Column(name = "Admin", nullable = false)
     private Long admin;
 
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
     public String getUsername() {
         return username;
     }
@@ -38,8 +33,7 @@ public class UserModel {
     }
     public UserModel() {
     }
-    public UserModel(Long Id, String username, String password, Long admin) {
-        this.id = Id;
+    public UserModel(String username, String password, Long admin) {
         this.username = username;
         this.password = password;
         this.admin = admin;
@@ -47,7 +41,6 @@ public class UserModel {
     @Override
     public String toString() {
         return "UserModel{" +
-                "id=" + id + '\'' +
                 "username='" + username + '\'' +
                 ", password='" + password + '\'' +
                 ", admin='" + admin + '\'' +
