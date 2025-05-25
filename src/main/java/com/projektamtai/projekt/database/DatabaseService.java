@@ -63,7 +63,7 @@ public class DatabaseService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono takiej gaśnicy.");
         if(extinguisher.get().getUsed())
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nie można przenieść zużytej gaśnicy.");
-        if(extinguisher.get().getExpire().isAfter(Instant.now()))
+        if(extinguisher.get().getExpire().isBefore(Instant.now()))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Przeterminowana gaśnica nie moze zostać przeniesiona.");
         if(extinguisher.get().getLocation().equals(location))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Gaśnica już znajduje się w tym miejscu.");
@@ -103,7 +103,7 @@ public class DatabaseService {
     public ResponseEntity<?> listUseless(@RequestHeader(value = "Authorization", required = false) String token) {
         if(token == null || !authorize.isAuthorized(token, 1L))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
-        List<ExtinguisherModel> useless = extinguisherRepository.findAll().stream().filter(extinguisherModel -> extinguisherModel.getUsed() || extinguisherModel.getExpire().isAfter(Instant.now())).collect(Collectors.toList());
+        List<ExtinguisherModel> useless = extinguisherRepository.findAll().stream().filter(extinguisherModel -> extinguisherModel.getUsed() || extinguisherModel.getExpire().isBefore(Instant.now())).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(useless);
     }
 
