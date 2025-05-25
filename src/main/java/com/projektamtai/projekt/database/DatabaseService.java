@@ -74,7 +74,7 @@ public class DatabaseService {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> add(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam Instant expire, @RequestParam(required = false) String customID) {
+    public ResponseEntity<?> add(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam Instant expire, @RequestParam(required = false) String location, @RequestParam(required = false) String notes, @RequestParam(required = false) String customID) {
         if(token == null || !authorize.isAuthorized(token, 1L))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         List<String>extinguisherIDs = extinguisherRepository.findAll().stream().map(ExtinguisherModel::getId).toList();
@@ -82,8 +82,8 @@ public class DatabaseService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Gaśnica o takim ID już istnieje.");
         for(int i = 1;i < 10000;i++)
             if(!extinguisherIDs.contains("G"+i)) {
-                extinguisherRepository.save(new ExtinguisherModel("G" + i, expire, false, null, null));
-                return ResponseEntity.status(HttpStatus.OK).body(i);
+                extinguisherRepository.save(new ExtinguisherModel("G" + i, expire, false, location, notes));
+                return ResponseEntity.status(HttpStatus.OK).body("G" + i);
             }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Za dużo gaśnic w bazie danych.");
     }
