@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,7 +30,7 @@ public class DatabaseService {
 
     @GetMapping("/inspection")
     public ResponseEntity<?> inspection(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String id) {
-        if(token == null || !authorize.isAuthorized(token, 0L))
+        if(token == null || !authorize.isAuthorized(token, 0))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         Optional<ExtinguisherModel> extinguisher = extinguisherRepository.findById(id);
         if(extinguisher.isPresent())
@@ -40,7 +40,7 @@ public class DatabaseService {
 
     @PatchMapping("/use")
     public ResponseEntity<String> use(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String id) {
-        if(token == null || !authorize.isAuthorized(token, 0L))
+        if(token == null || !authorize.isAuthorized(token, 0))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         Optional<ExtinguisherModel> extinguisher = extinguisherRepository.findById(id);
         if(extinguisher.isEmpty())
@@ -55,18 +55,16 @@ public class DatabaseService {
     }
 
     @PatchMapping("/move")
-    public ResponseEntity<String> move(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String id, @RequestParam String location, @RequestParam(required = false) String notes) {
-        if(token == null || !authorize.isAuthorized(token, 1L))
+    public ResponseEntity<String> move(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String id, @RequestParam(required = false, defaultValue = "") String location, @RequestParam(required = false) String notes) {
+        if(token == null || !authorize.isAuthorized(token, 1))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         Optional<ExtinguisherModel> extinguisher = extinguisherRepository.findById(id);
         if(extinguisher.isEmpty())
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono takiej gaśnicy.");
         if(extinguisher.get().getUsed())
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nie można przenieść zużytej gaśnicy.");
-        if(extinguisher.get().getExpire().isBefore(Instant.now()))
+        if(extinguisher.get().getExpire().isBefore(LocalDate.now()))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Przeterminowana gaśnica nie moze zostać przeniesiona.");
-        if(extinguisher.get().getLocation().equals(location))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Gaśnica już znajduje się w tym miejscu.");
         extinguisher.get().setLocation(location);
         extinguisher.get().setNotes(notes);
         extinguisherRepository.save(extinguisher.get());
@@ -74,12 +72,16 @@ public class DatabaseService {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> add(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam Instant expire, @RequestParam(required = false) String location, @RequestParam(required = false) String notes, @RequestParam(required = false) String customID) {
-        if(token == null || !authorize.isAuthorized(token, 1L))
+    public ResponseEntity<?> add(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam LocalDate expire, @RequestParam(required = false) String location, @RequestParam(required = false) String notes, @RequestParam(required = false) String customID) {
+        if(token == null || !authorize.isAuthorized(token, 1))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         List<String>extinguisherIDs = extinguisherRepository.findAll().stream().map(ExtinguisherModel::getId).toList();
-        if(extinguisherIDs.contains(customID))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Gaśnica o takim ID już istnieje.");
+        if(customID != null){
+            if(extinguisherIDs.contains(customID))
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Gaśnica o takim ID już istnieje.");
+            extinguisherRepository.save(new ExtinguisherModel(customID, expire, false, location, notes));
+            return ResponseEntity.status(HttpStatus.OK).body(customID);
+        }
         for(int i = 1;i < 10000;i++)
             if(!extinguisherIDs.contains("G"+i)) {
                 extinguisherRepository.save(new ExtinguisherModel("G" + i, expire, false, location, notes));
@@ -88,9 +90,9 @@ public class DatabaseService {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Za dużo gaśnic w bazie danych.");
     }
 
-    @PostMapping("/remove")
+    @DeleteMapping("/remove")
     public ResponseEntity<?> remove(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String id) {
-        if(token == null || !authorize.isAuthorized(token, 1L))
+        if(token == null || !authorize.isAuthorized(token, 1))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         Optional<ExtinguisherModel> extinguisher = extinguisherRepository.findById(id);
         if(extinguisher.isEmpty())
@@ -101,25 +103,35 @@ public class DatabaseService {
 
     @GetMapping("/list_useless")
     public ResponseEntity<?> listUseless(@RequestHeader(value = "Authorization", required = false) String token) {
-        if(token == null || !authorize.isAuthorized(token, 1L))
+        if(token == null || !authorize.isAuthorized(token, 1))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
-        List<ExtinguisherModel> useless = extinguisherRepository.findAll().stream().filter(extinguisherModel -> extinguisherModel.getUsed() || extinguisherModel.getExpire().isBefore(Instant.now())).collect(Collectors.toList());
+        List<ExtinguisherModel> useless = extinguisherRepository.findAll().stream().filter(extinguisherModel -> extinguisherModel.getUsed() || extinguisherModel.getExpire().isBefore(LocalDate.now())).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(useless);
     }
 
     @GetMapping("/get_users")
     public ResponseEntity<?> getUsers(@RequestHeader(value = "Authorization", required = false) String token) {
-        if(token == null || !authorize.isAuthorized(token, 1L))
+        if(token == null || !authorize.isAuthorized(token, 1))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         List<UserModel> users = userRepository.findAll();
+        if(authorize.isAuthorized(token, 2))
+            return ResponseEntity.status(HttpStatus.OK).body(users);
+        else for(UserModel user : users)
+            if(user.getRole() > 0 && !user.getUsername().equals(authorize.getUsernameFromToken(token)))
+                user.setPassword(null);
+
         return ResponseEntity.status(HttpStatus.OK).body(users);
     }
 
     @PostMapping("/add_user")
-    public ResponseEntity<?> addUser(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String username, @RequestParam Long role) {
-        if(token == null || !authorize.isAuthorized(token, 1L))
+    public ResponseEntity<?> addUser(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String username, @RequestParam Integer role) {
+        if(token == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
-        if(role != 0L && role != 1L)
+        if(role == 1 && !authorize.isAuthorized(token, 2))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
+        if(!authorize.isAuthorized(token, 1))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
+        if(role != 0 && role != 1)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Niepoprawny rodzaj uprawnień.");
         List<UserModel> users = userRepository.findAll();
         for(UserModel user : users)
@@ -131,13 +143,15 @@ public class DatabaseService {
         return ResponseEntity.status(HttpStatus.OK).body(newUser);
     }
 
-    @PostMapping("/remove_user")
+    @DeleteMapping("/remove_user")
     public ResponseEntity<?> removeUser(@RequestHeader(value = "Authorization", required = false) String token, @RequestParam String username) {
-        if(token == null || !authorize.isAuthorized(token, 1L))
+        if(token == null || !authorize.isAuthorized(token, 1))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
         List<UserModel> users = userRepository.findAll();
         for(UserModel user : users)
             if(user.getUsername().equals(username)) {
+                if(user.getRole() == 2 || user.getRole() == 1 && !authorize.isAuthorized(token, 2))
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak uprawnień.");
                 userRepository.delete(user);
                 return ResponseEntity.status(HttpStatus.OK).body("Użytkownik usunięty.");
             }

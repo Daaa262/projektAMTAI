@@ -10,8 +10,8 @@ public class UserModel {
     private String username;
     @Column(name = "Password", nullable = false)
     private String password;
-    @Column(name = "Admin", nullable = false)
-    private Long admin;
+    @Column(name = "Role", nullable = false)
+    private Integer role;
 
     public String getUsername() {
         return username;
@@ -25,25 +25,25 @@ public class UserModel {
     public void setPassword(String password) {
         this.password = password;
     }
-    public Long getRole() {
-        return admin;
+    public Integer getRole() {
+        return role;
     }
-    public void setRole(Long role) {
-        this.admin = role;
+    public void setRole(Integer role) {
+        this.role = role;
     }
     public UserModel() {
     }
-    public UserModel(String username, String password, Long admin) {
+    public UserModel(String username, String password, Integer role) {
         this.username = username;
         this.password = password;
-        this.admin = admin;
+        this.role = role;
     }
     @Override
     public String toString() {
         return "UserModel{" +
                 "username='" + username + '\'' +
                 ", password='" + password + '\'' +
-                ", admin='" + admin + '\'' +
+                ", admin='" + role + '\'' +
                 '}';
     }
 }

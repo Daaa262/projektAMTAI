@@ -6,7 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.ColumnDefault;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "extinguisher")
@@ -16,7 +16,7 @@ public class ExtinguisherModel {
     private String id;
 
     @Column(name = "Expire", nullable = false)
-    private Instant expire;
+    private LocalDate expire;
 
     @ColumnDefault("0")
     @Column(name = "Used", nullable = false)
@@ -31,7 +31,7 @@ public class ExtinguisherModel {
     public ExtinguisherModel() {
     }
 
-    public ExtinguisherModel(String id, Instant expire, Boolean used, String location, String notes) {
+    public ExtinguisherModel(String id, LocalDate expire, Boolean used, String location, String notes) {
         this.id = id;
         this.expire = expire;
         this.used = used;
@@ -47,11 +47,11 @@ public class ExtinguisherModel {
         this.id = id;
     }
 
-    public Instant getExpire() {
+    public LocalDate getExpire() {
         return expire;
     }
 
-    public void setExpire(Instant expire) {
+    public void setExpire(LocalDate expire) {
         this.expire = expire;
     }
 

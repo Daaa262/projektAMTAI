@@ -39,7 +39,7 @@ public class Login {
     }
 
 
-    private String generateToken(String username, Long role){
+    private String generateToken(String username, Integer role){
         return Jwts.builder().setSubject(username).claim("role", role).setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)).signWith(SignatureAlgorithm.HS512, secret).compact();
     }
 }
