@@ -185,4 +185,9 @@ public class DatabaseService {
 
         return password.toString();
     }
+
+    @GetMapping("/test")
+    public String test() {
+        return "DZIAŁA!!!";
+    }
 }
