@@ -5,6 +5,8 @@ import com.projektamtai.projekt.models.ExtinguisherModel;
 import com.projektamtai.projekt.models.UserModel;
 import com.projektamtai.projekt.repositories.ExtinguisherRepository;
 import com.projektamtai.projekt.repositories.UserRepository;
+import com.projektamtai.projekt.services.SubscriptionService;
+import nl.martijndwars.webpush.Subscription;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +23,13 @@ public class DatabaseService {
     Authorize authorize;
     UserRepository userRepository;
     ExtinguisherRepository extinguisherRepository;
+    SubscriptionService subscriptionService;
 
-    public DatabaseService(Authorize authorize, UserRepository userRepository, ExtinguisherRepository extinguisherRepository) {
+    public DatabaseService(Authorize authorize, UserRepository userRepository, ExtinguisherRepository extinguisherRepository, SubscriptionService subscriptionService) {
         this.authorize = authorize;
         this.userRepository = userRepository;
         this.extinguisherRepository = extinguisherRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     @GetMapping("/inspection")
@@ -49,9 +53,8 @@ public class DatabaseService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Gaśnica już zużyta.");
         extinguisher.get().setUsed(true);
         extinguisherRepository.save(extinguisher.get());
+        subscriptionService.sendNotificationToAll("Gaśnica \"" + id + "\" w " + (extinguisher.get().getLocation() == null?"magazynie":extinguisher.get().getLocation()) + " została zużyta przez " + authorize.getUsernameFromToken(token));
         return ResponseEntity.status(HttpStatus.OK).body("Gaśnica zużyta.");
-
-        //Wysyłaj PUSH do frontu
     }
 
     @PatchMapping("/move")
@@ -156,6 +159,17 @@ public class DatabaseService {
                 return ResponseEntity.status(HttpStatus.OK).body("Użytkownik usunięty.");
             }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Taki użytkownik nie istnieje.");
+    }
+
+    @PostMapping("/subscribe")
+    public void subscribe(@RequestBody Subscription subscription) {
+        subscriptionService.subscribe(subscription);
+    }
+
+    @PostMapping("/unsubscribe")
+    public void unsubscribe(@RequestBody String endpoint) {
+        endpoint = endpoint.replace("\"", "");
+        subscriptionService.unsubscribe(endpoint);
     }
 
     private String generatePassword() {
