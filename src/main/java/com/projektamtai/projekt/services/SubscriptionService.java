@@ -21,7 +21,7 @@ public class SubscriptionService {
 
     @Value("BH95eyFrwzvQiU1Iz_yjHWxR41P5rIZSpKldHa9in6ncodggarHkO461E6NECMTt3KMWZxpERvWCeHW9lQmrIms")
     private String publicKey;
-    @Value("${PRIVATE_VAPID}")
+    @Value("kpnvrM5WDY6Iod51SWSZpjOmi3R_yLN2Wd5dQRw4ZrA")
     private String privateKey;
 
     private PushService pushService;
